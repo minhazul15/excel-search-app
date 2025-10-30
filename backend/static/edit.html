@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Customer - ORDERMONKEY</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #e63509;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    label {
+      font-weight: 600;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    button {
+      padding: 12px;
+      font-size: 16px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .back-btn {
+      margin-top: 15px;
+      text-align: center;
+      cursor: pointer;
+      color: #007BFF;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Edit Customer</h2>
+    <form id="editForm"></form>
+    <div class="back-btn" onclick="window.location.href='/'">← Back to Search</div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) {
+      alert('Invalid ID.');
+      window.location.href = '/';
+    }
+
+    async function loadColumnsAndData() {
+      try {
+        // Load column info
+        const colRes = await fetch('/columns');
+        const columns = await colRes.json();
+
+        // Load record data
+        const dataRes = await fetch(`/restaurant/edit/${id}`);
+        if (!dataRes.ok) throw new Error('Failed to load record');
+        const restaurant = await dataRes.json();
+
+        if (restaurant.error) {
+          alert(restaurant.error);
+          window.location.href = '/';
+          return;
+        }
+
+        const form = document.getElementById('editForm');
+        form.innerHTML = '';
+
+        const textColumns = [
+          'No of Terminal',
+          'No of Printer',
+          'KIOSK PIN',
+          'TEAMVIEWER ID'
+        ];
+
+        columns.forEach(col => {
+          if (col.pk) return; // skip id
+
+          const label = document.createElement('label');
+          label.textContent = `${col.name}${col.notnull ? '*' : ''}`;
+          label.htmlFor = col.name;
+
+          let input;
+          if (textColumns.includes(col.name)) {
+            input = document.createElement('input');
+            input.type = 'text';
+          } else if (col.type.toLowerCase().includes('int') || col.type.toLowerCase().includes('real')) {
+            input = document.createElement('input');
+            input.type = 'number';
+          } else {
+            input = document.createElement('input');
+            input.type = 'text';
+          }
+
+          input.id = col.name;
+          input.name = col.name;
+          input.value = restaurant[col.name] ?? '';
+          if (col.notnull) input.required = true;
+
+          form.appendChild(label);
+          form.appendChild(input);
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'submit';
+        saveBtn.textContent = '💾 Save Changes';
+        form.appendChild(saveBtn);
+      } catch (error) {
+        alert('Failed to load edit form');
+        console.error(error);
+      }
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const data = {};
+      for (const [key, value] of formData.entries()) {
+        data[key] = value.trim();
+      }
+
+      try {
+        const res = await fetch(`/restaurant/edit/save/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const msg = await res.json();
+        if (res.ok) {
+          alert(msg.message || 'Record updated!');
+          window.location.href = '/';
+        } else {
+          alert(msg.error || 'Failed to update');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+
+    window.onload = loadColumnsAndData;
+  </script>
+</body>
+</html>

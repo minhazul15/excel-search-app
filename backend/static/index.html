@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ORDERMONKEY Creds</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #F8F8FF;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .overlay {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(67, 67, 67, 0.909);
+      background-image: url('https://i.postimg.cc/mgyCB145/rsz-om-pay-1-photoroom.png');
+      max-width: 600px;
+      width: 100%;
+      position: relative;
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #222;
+    }
+
+    .search-area {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      padding: 12px 18px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      outline: none;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .clear-btn {
+      background-color: #000000;
+    }
+    .clear-btn:hover {
+      background-color: #495057;
+    }
+
+    #addRestaurantBtn {
+      background-color: #28a745;
+    }
+    #addRestaurantBtn:hover {
+      background-color: #1e7e34;
+    }
+
+    .result-wrapper {
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-x: auto;
+    }
+
+    table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: left;
+      word-break: break-word;
+      max-width: 250px;
+    }
+
+    th {
+      background-color: #007BFF;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    th.sort-asc::after { content: " ▲"; }
+    th.sort-desc::after { content: " ▼"; }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Move profile + logout buttons to top-left corner */
+#profileBtn, #logoutBtn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+#logoutBtn {
+  background-color: #dc3545;
+}
+#logoutBtn:hover {
+  background-color: #b02a37;
+}
+
+#profileBtn {
+  background-color: #007bff;
+  margin-left: 100px; /* space between logout and profile buttons */
+}
+#profileBtn:hover {
+  background-color: #0056b3;
+}
+
+
+    @media (max-width: 600px) {
+      input[type="text"] { max-width: 100%; }
+      .container { padding: 20px; }
+      button { width: 100%; }
+      .buttons { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="container">
+      <!-- Profile and logout buttons -->
+      <button id="logoutBtn">🚪 Logout</button>
+      <button id="profileBtn">👤 Profile</button>
+
+      <img src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png" alt="LOGO" class="logo" />
+      <h1>ORDERMONKEY Credentials</h1>
+
+      <div class="search-area">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Enter Restaurant Name"
+          onkeydown="if(event.key === 'Enter') performSearch();"
+        />
+        <div class="buttons">
+          <button onclick="performSearch()">Search</button>
+          <button onclick="clearSearch()" class="clear-btn">Clear</button>
+          <button id="addRestaurantBtn">+ Add new Customer</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="result-wrapper"></div>
+  </div>
+
+  <script>
+    document.getElementById('addRestaurantBtn').addEventListener('click', () => {
+      window.location.href = '/insert';
+    });
+
+    const desiredColumnOrder = [
+      'Location Name', 'Opening Hours', 'Opening Days', 'BackOffice Email', 'APP', 'Status', 'KIOSK', 'Restaurent ID',
+      'Kiosk Build No', 'No of Terminal', 'Payment Provider', 'NUC', 'Product Module',
+      'Terminal ID', 'Payment Service Version', 'Intregation', 'Org ID', 'Branch UUID',
+      'No of Printer', 'Polling Enabled', 'Scanner', 'KIOSK PIN', 'AnyDesk ID',
+      'AnyDesk Password', 'Deliverect', 'LightSpeed', 'Contacts of Client', 'TEAMVIEWER ID'
+    ];
+
+    let currentSort = { column: null, order: 'asc' };
+    let lastResults = [];
+
+    async function performSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
+      if (!query) {
+        alert('Please enter a search term');
+        return;
+      }
+
+      resultsDiv.innerHTML = 'Loading...';
+
+      try {
+        const response = await fetch(`/search?name=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        lastResults = data || [];
+
+        if (lastResults.length === 0) {
+          resultsDiv.innerHTML = 'No results found.';
+          return;
+        }
+
+        renderTable(lastResults);
+      } catch (error) {
+        resultsDiv.innerHTML = 'Error fetching results.';
+        console.error('Fetch error:', error);
+      }
+    }
+
+    function renderTable(data) {
+      const resultsDiv = document.getElementById('results');
+
+      let tableHTML = '<table><thead><tr>';
+      desiredColumnOrder.forEach(header => {
+        tableHTML += `<th onclick="sortTable('${header}')">${header}</th>`;
+      });
+      tableHTML += '<th>Actions</th>';
+      tableHTML += '</tr></thead><tbody>';
+
+      data.forEach(row => {
+        tableHTML += '<tr>';
+        desiredColumnOrder.forEach(header => {
+          tableHTML += `<td>${row[header] ?? ''}</td>`;
+        });
+
+        const rid = row.id ?? row.ID ?? row.Id;
+        tableHTML += `
+          <td>
+            <button class="btn-edit" onclick="editRestaurant(${JSON.stringify(rid)})">Edit</button>
+            <button class="btn-delete", onclick="deleteRestaurant(${JSON.stringify(rid)})">Delete</button>
+          </td>
+        `;
+        tableHTML += '</tr>';
+      });
+
+      tableHTML += '</tbody></table>';
+      resultsDiv.innerHTML = tableHTML;
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('results').innerHTML = '';
+      lastResults = [];
+      currentSort = { column: null, order: 'asc' };
+    }
+
+    function sortTable(column) {
+      const table = document.querySelector('#results table');
+      if (!table) return;
+
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      const headerCells = table.querySelectorAll('th');
+      headerCells.forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
+
+      let order = 'asc';
+      if (currentSort.column === column && currentSort.order === 'asc') order = 'desc';
+      currentSort = { column, order };
+
+      const colIndex = desiredColumnOrder.findIndex(h => h === column);
+      rows.sort((a, b) => {
+        const cellA = a.children[colIndex].textContent.trim().toLowerCase();
+        const cellB = b.children[colIndex].textContent.trim().toLowerCase();
+        const aNum = Number(cellA), bNum = Number(cellB);
+        const bothNumeric = !Number.isNaN(aNum) && !Number.isNaN(bNum);
+
+        if (bothNumeric) return order === 'asc' ? aNum - bNum : bNum - aNum;
+        return order === 'asc' ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+      });
+
+      const tbody = table.querySelector('tbody');
+      tbody.innerHTML = '';
+      rows.forEach(row => tbody.appendChild(row));
+
+      const activeHeader = table.querySelectorAll('th')[colIndex];
+      activeHeader.classList.add(order === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+
+    function editRestaurant(id) {
+      if (!id) return alert('Invalid record ID.');
+      window.location.href = `/static/edit.html?id=${encodeURIComponent(id)}`;
+    }
+
+    async function deleteRestaurant(id) {
+      if (!id || !confirm('Are you sure you want to delete this record?')) return;
+
+      try {
+        const response = await fetch(`/restaurant/delete/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const result = await response.json();
+        alert(result.message || 'Deleted');
+        lastResults = lastResults.filter(r => (r.id ?? r.ID ?? r.Id) !== id);
+        if (lastResults.length > 0) renderTable(lastResults);
+        else document.getElementById('results').innerHTML = 'No results found.';
+      } catch (err) {
+        alert('Error deleting record');
+        console.error(err);
+      }
+    }
+
+    // --- PROFILE + LOGOUT ---
+    document.getElementById('profileBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/current_user');
+        const user = await res.json();
+
+        if (!res.ok) {
+          alert('Session expired. Please login again.');
+          window.location.href = '/static/login.html';
+          return;
+        }
+
+        let choice = prompt(
+          `Logged in as: ${user.username}\nRole: ${user.role}\n\nChoose an option:\n1. Reset Password\n2. Change Username\n${user.role === 'admin' ? '3. Open Admin Panel\n' : ''}Cancel = Close`
+        );
+
+        if (choice === '1') {
+          const newPass = prompt('Enter new password:');
+          if (newPass) {
+            const res2 = await fetch('/reset_my_password', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ new_password: newPass })
+            });
+            const data = await res2.json();
+            alert(data.message || data.error);
+          }
+        } 
+        else if (choice === '2') {
+          const newUsername = prompt('Enter new username:');
+          if (newUsername) {
+            const res3 = await fetch('/change_username', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ new_username: newUsername })
+            });
+            const data = await res3.json();
+            alert(data.message || data.error);
+          }
+        } 
+        else if (choice === '3' && user.role === 'admin') {
+          window.location.href = '/static/admin.html';
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert('Error fetching profile info');
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/logout');
+      window.location.href = '/static/login.html';
+    });
+  </script>
+</body>
+</html>

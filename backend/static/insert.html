@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Insert Customer - ORDERMONKEY</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+      color: #e63509;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    label {
+      font-weight: 600;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    button {
+      padding: 12px;
+      font-size: 16px;
+      background-color: #29b754;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .back-btn {
+      margin-top: 15px;
+      text-align: center;
+      cursor: pointer;
+      color: #007BFF;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Insert New Customer</h2>
+    <form id="insertForm"></form>
+    <div class="back-btn" onclick="window.location.href='/'">← Back to Search</div>
+  </div>
+
+  <script>
+    async function loadColumns() {
+      try {
+        const res = await fetch('/columns');
+        const columns = await res.json();
+
+        const form = document.getElementById('insertForm');
+        form.innerHTML = ''; // clear existing
+
+        // List of columns to force as text input
+        const textColumns = [
+          'No of Terminal',
+          'No of Printer',
+          'KIOSK PIN',
+          'TEAMVIEWER ID'
+        ];
+
+        columns.forEach(col => {
+          // Skip primary key
+          if (col.pk) return;
+
+          const label = document.createElement('label');
+          label.textContent = `${col.name}${col.notnull ? '*' : ''}`;
+          label.htmlFor = col.name;
+
+          let input;
+
+          // Force text input for these specific columns
+          if (textColumns.includes(col.name)) {
+            input = document.createElement('input');
+            input.type = 'text';
+          } else if (col.type.toLowerCase().includes('int') || col.type.toLowerCase().includes('real')) {
+            input = document.createElement('input');
+            input.type = 'number';
+          } else {
+            input = document.createElement('input');
+            input.type = 'text';
+          }
+
+          input.id = col.name;
+          input.name = col.name;
+          if (col.notnull) input.required = true;
+
+          form.appendChild(label);
+          form.appendChild(input);
+        });
+
+        const submitBtn = document.createElement('button');
+        submitBtn.type = 'submit';
+        submitBtn.textContent = '+Add Customer';
+        form.appendChild(submitBtn);
+      } catch (error) {
+        alert('Failed to load form fields');
+        console.error(error);
+      }
+    }
+
+    document.getElementById('insertForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const data = {};
+
+      for (const [key, value] of formData.entries()) {
+        if (value.trim() !== '') {
+          data[key] = value.trim();
+        }
+      }
+
+      try {
+        const response = await fetch('/restaurant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          alert('Restaurant added successfully!');
+          window.location.href = '/';
+        } else {
+          const err = await response.json();
+          alert('Error: ' + (err.error || 'Failed to add restaurant'));
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+
+    window.onload = loadColumns;
+  </script>
+</body>
+</html>

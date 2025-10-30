@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - ORDERMONKEY</title>
+  <style>
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background-image: url('https://ordermonkey.com/wp-content/uploads/2025/08/discount-bg-scaled.webp'); /* Add your image URL here */
+    background-size: cover;  /* Ensure the image covers the entire screen */
+    background-position: center;  /* Centers the image */
+    background-repeat: no-repeat;  /* Prevents the image from repeating */
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+  }
+
+  .login-box {
+    background: rgba(255, 255, 255, 0.8); /* Slight transparency for the background */
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    width: 340px;
+    text-align: center;
+    animation: fadeIn 0.4s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  h2 {
+    color: #f62a06;
+    margin-bottom: 25px;
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    outline: none;
+  }
+
+  input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  .register {
+    margin-top: 15px;
+    color: #333;
+    font-size: 14px;
+  }
+
+  .register a {
+    color: #f11105;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .register a:hover {
+    text-decoration: underline;
+  }
+
+  .error {
+    color: red;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+    min-height: 20px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h2>ORDERMONKEY LOGIN</h2>
+
+    <input type="text" id="username" placeholder="Username" autocomplete="off" />
+    <input type="password" id="password" placeholder="Password" />
+
+    <button onclick="login()">Login</button>
+
+    <div class="register">
+      Don’t have an account? <a href="#" onclick="register()">Register</a>
+    </div>
+
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("error");
+
+      if (!username || !password) {
+        errorDiv.textContent = "Please enter both username and password.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/login", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          window.location.href = "/";
+        } else {
+          errorDiv.textContent = data.error || "Login failed.";
+        }
+      } catch (err) {
+        errorDiv.textContent = "Server error. Please try again later.";
+        console.error(err);
+      }
+    }
+
+    async function register() {
+      const username = prompt("Enter new username:");
+      const password = prompt("Enter new password:");
+      const errorDiv = document.getElementById("error");
+
+      if (!username || !password) {
+        errorDiv.textContent = "Username and password cannot be empty.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+      } catch (err) {
+        alert("Error connecting to server.");
+        console.error(err);
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") login();
+    });
+  </script>
+
+</body>
+</html>

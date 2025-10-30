@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel - ORDERMONKEY</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; padding: 40px; }
+    h2 { text-align: center; color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #007bff; color: white; }
+    button { background-color: #28a745; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    button:hover { background-color: #218838; }
+    .delete-btn { background-color: #dc3545; }
+    .delete-btn:hover { background-color: #b02a37; }
+    .make-admin-btn { background-color: #ffc107; }
+    .make-admin-btn:hover { background-color: #e0a800; }
+    .revoke-admin-btn { background-color: #007bff; }
+    .revoke-admin-btn:hover { background-color: #0056b3; }
+    .back-btn { background-color: #6c757d; padding: 8px 14px; border: none; border-radius: 4px; color: white; cursor: pointer; margin-bottom: 20px; }
+    .back-btn:hover { background-color: #5a6268; }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+  <h2>Pending User Approvals</h2>
+  <table id="usersTable">
+    <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadPending() {
+      const res = await fetch('/admin/users');
+      const users = await res.json();
+      const tbody = document.querySelector('#usersTable tbody');
+      tbody.innerHTML = '';
+
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.id}</td>
+          <td>${u.username}</td>
+          <td>${u.role}</td>
+          <td>${u.approved ? 'Approved' : 'Pending'}</td>
+          <td>
+            ${!u.approved ? `<button onclick="approve(${u.id})">Approve</button>` : ''}
+            <button onclick="revoke(${u.id})">Revoke</button>
+            <button class="delete-btn" onclick="deleteUser(${u.id})">Delete</button>
+            <button class="make-admin-btn" onclick="makeAdmin(${u.id})">Make Admin</button>
+            ${u.role === 'admin' ? `<button class="revoke-admin-btn" onclick="revokeAdmin(${u.id})">Revoke Admin</button>` : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function approve(id) {
+      const res = await fetch(`/admin/approve/${id}`, { method: 'POST' });
+      const msg = await res.json();
+      alert(msg.message || msg.error);
+      loadPending();
+    }
+
+    async function revoke(id) {
+      const res = await fetch(`/admin/revoke/${id}`, { method: 'POST' });
+      const msg = await res.json();
+      alert(msg.message || msg.error);
+      loadPending();
+    }
+
+    async function deleteUser(id) {
+      if (confirm("Are you sure you want to delete this user?")) {
+        const res = await fetch(`/admin/delete/${id}`, { method: 'DELETE' });
+        const msg = await res.json();
+        alert(msg.message || msg.error);
+        loadPending();
+      }
+    }
+
+    // New function to make a user an admin
+    async function makeAdmin(id) {
+      if (confirm("Are you sure you want to make this user an admin?")) {
+        const res = await fetch(`/admin/make_admin/${id}`, { method: 'POST' });
+        const msg = await res.json();
+        alert(msg.message || msg.error);
+        loadPending();
+      }
+    }
+
+    // New function to revoke admin privileges
+    async function revokeAdmin(id) {
+      if (confirm("Are you sure you want to revoke admin privileges from this user?")) {
+        const res = await fetch(`/admin/revoke_admin/${id}`, { method: 'POST' });
+        const msg = await res.json();
+        alert(msg.message || msg.error);
+        loadPending();
+      }
+    }
+
+    window.onload = loadPending;
+  </script>
+</body>
+</html>
