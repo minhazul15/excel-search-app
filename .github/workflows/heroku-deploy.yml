@@ -1,0 +1,28 @@
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main  # or the branch you want to trigger deployment from
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code from the GitHub repository
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Set up Heroku CLI
+    - name: Set up Heroku CLI
+      uses: akshnz/heroku-cli-action@v1
+
+    # Log in to Heroku using API key stored in GitHub Secrets
+    - name: Login to Heroku
+      run: heroku auth:token
+
+    # Deploy to Heroku
+    - name: Deploy to Heroku
+      run: git remote add heroku https://git.heroku.com/YOUR_APP_NAME.git && git push heroku main
+
