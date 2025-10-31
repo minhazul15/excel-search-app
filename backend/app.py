@@ -6,7 +6,8 @@ app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'sta
 app.secret_key = "4e971360ab0ae501a0550ce65834d8b0eb2289110a0ecf1a2df598b34968916e"  # ✅ you can hardcode this
 CORS(app)
 
-DB = "ORDERMONKEY.db"
+DB = os.path.join(os.path.dirname(__file__), "ORDERMONKEY.db")
+
 
 # ---------- Helper ----------
 def run_query(query, args=(), one=False):
