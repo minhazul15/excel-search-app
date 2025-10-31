@@ -18,6 +18,7 @@ def run_query(query, args=(), one=False):
     conn.close()
     return (dict(rows[0]) if rows else None) if one else [dict(row) for row in rows]
 
+
 # ---------- Static Pages ----------
 @app.route('/')
 def index():
@@ -61,7 +62,7 @@ def register():
 
     run_query("INSERT INTO users (username, password_hash, role, approved) VALUES (?, ?, ?, ?)",
               [username, hash_pw, "user", 0])  # initially not approved
-    return jsonify({"message": "User registered successfully, Waiting for approval."})
+    return jsonify({"message": "User registered successfully, waiting for approval."})
 
 
 @app.route("/login", methods=["POST"])
@@ -144,35 +145,52 @@ def change_username():
 
 
 # ---------- Admin Panel API ----------
-
-# Endpoint to get all users, including their approval status
 @app.route("/admin/users", methods=["GET"])
 def get_users():
     if not session.get("user") or session["user"]["role"] != "admin":
         return jsonify({"error": "Unauthorized"}), 401
-
     users = run_query("SELECT id, username, role, approved FROM users")
     return jsonify(users)
 
-# Endpoint to approve a user
+
 @app.route("/admin/approve/<int:id>", methods=["POST"])
 def approve_user(id):
     if not session.get("user") or session["user"]["role"] != "admin":
         return jsonify({"error": "Unauthorized"}), 401
-
-    # Update the user's approval status to 1 (approved)
     run_query("UPDATE users SET approved = 1 WHERE id = ?", [id])
     return jsonify({"message": f"User with ID {id} approved successfully."})
 
-# Endpoint to revoke a user's access
+
 @app.route("/admin/revoke/<int:id>", methods=["POST"])
 def revoke_user(id):
     if not session.get("user") or session["user"]["role"] != "admin":
         return jsonify({"error": "Unauthorized"}), 401
-
-    # Update the user's approval status to 0 (not approved)
     run_query("UPDATE users SET approved = 0 WHERE id = ?", [id])
     return jsonify({"message": f"User with ID {id} revoked access successfully."})
+
+
+@app.route("/admin/delete/<int:id>", methods=["DELETE"])
+def delete_user(id):
+    if not session.get("user") or session["user"]["role"] != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    run_query("DELETE FROM users WHERE id = ?", [id])
+    return jsonify({"message": f"User with ID {id} deleted successfully."})
+
+
+@app.route("/admin/make_admin/<int:id>", methods=["POST"])
+def make_admin(id):
+    if not session.get("user") or session["user"]["role"] != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    run_query("UPDATE users SET role = 'admin' WHERE id = ?", [id])
+    return jsonify({"message": f"User with ID {id} is now an admin."})
+
+
+@app.route("/admin/revoke_admin/<int:id>", methods=["POST"])
+def revoke_admin(id):
+    if not session.get("user") or session["user"]["role"] != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    run_query("UPDATE users SET role = 'user' WHERE id = ?", [id])
+    return jsonify({"message": f"Admin privileges revoked from user with ID {id}."})
 
 
 # ---------- Restaurant CRUD API ----------
@@ -268,40 +286,7 @@ def delete_restaurant(id):
     return jsonify({"message": f"Restaurant with ID {id} deleted successfully"}), 200
 
 
-# Endpoint to delete a user
-@app.route("/admin/delete/<int:id>", methods=["DELETE"])
-def delete_user(id):
-    if not session.get("user") or session["user"]["role"] != "admin":
-        return jsonify({"error": "Unauthorized"}), 401
-
-    # Delete the user from the database
-    run_query("DELETE FROM users WHERE id = ?", [id])
-    return jsonify({"message": f"User with ID {id} deleted successfully."})
-
-
-
-    # Endpoint to make a user an admin
-@app.route("/admin/make_admin/<int:id>", methods=["POST"])
-def make_admin(id):
-    if not session.get("user") or session["user"]["role"] != "admin":
-        return jsonify({"error": "Unauthorized"}), 401
-
-    # Update the user's role to 'admin'
-    run_query("UPDATE users SET role = 'admin' WHERE id = ?", [id])
-    return jsonify({"message": f"User with ID {id} is now an admin."})
-
-
-# Endpoint to revoke admin privileges from a user
-@app.route("/admin/revoke_admin/<int:id>", methods=["POST"])
-def revoke_admin(id):
-    if not session.get("user") or session["user"]["role"] != "admin":
-        return jsonify({"error": "Unauthorized"}), 401
-
-    # Change the user's role to 'user'
-    run_query("UPDATE users SET role = 'user' WHERE id = ?", [id])
-    return jsonify({"message": f"Admin privileges revoked from user with ID {id}."})
-
-
 # ---------- Run ----------
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
