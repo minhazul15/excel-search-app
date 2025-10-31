@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify, send_from_directory, session, redirec
 from flask_cors import CORS
 import sqlite3, os, hashlib
 
-app = Flask(__name__, static_folder=os.path.join(os.getcwd(), 'static'))
-app.secret_key = "super_secret_key"  # change in production
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+app.secret_key = "4e971360ab0ae501a0550ce65834d8b0eb2289110a0ecf1a2df598b34968916e"  # ✅ you can hardcode this
 CORS(app)
 
 DB = "ORDERMONKEY.db"
